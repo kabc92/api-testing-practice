@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Declaración estándar XML, siempre va arriba -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- Le dice a Maven que este archivo sigue el estándar POM 4.0.0 -->
+
+    <modelVersion>4.0.0</modelVersion> <!-- Versión del formato POM, siempre es 4.0.0 -->
+    <groupId>com.kevinbc</groupId> <!-- Tu "organización", convencionalmente dominio al revés -->
+    <artifactId>api-testing-practice</artifactId> <!-- Nombre único de este proyecto -->
+    <version>1.0-SNAPSHOT</version> <!-- Versión del proyecto. SNAPSHOT = en desarrollo, no es release final -->
+
+    <properties>
+        <!-- Variables de configuración global del proyecto -->
+        <maven.compiler.source>21</maven.compiler.source> <!-- Con qué versión de Java está escrito el código fuente -->
+        <maven.compiler.target>21</maven.compiler.target> <!-- Para qué versión de Java se compila el bytecode -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding> <!-- Encoding de los archivos, UTF-8 evita problemas con caracteres especiales -->
+    </properties>
+
+    <dependencies>
+        <!-- Aquí van todas las librerías externas que necesita el proyecto -->
+        <!-- Maven las descarga automáticamente de internet la primera vez -->
+        <!-- Source: https://mvnrepository.com/artifact/io.rest-assured/rest-assured -->
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>6.0.0</version>
+            <scope>test</scope>
+        </dependency>
+
+
+        <!-- Source: https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.11.4</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- Configuración de cómo se construye y ejecuta el proyecto -->
+        <plugins>
+            <!-- Plugin que le dice a Maven cómo correr los tests de JUnit 5 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
