@@ -1,3 +1,5 @@
+package tests;
+
 import base.BaseTest;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.Test;

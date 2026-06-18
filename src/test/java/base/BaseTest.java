@@ -1,3 +1,5 @@
+package base;
+
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
@@ -5,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 public class BaseTest {
 
     //INSTANCE VARIABLE
-    RequestSpecification requestSpec;
+    protected RequestSpecification requestSpec;
 
     @BeforeEach
     public void setUp(){

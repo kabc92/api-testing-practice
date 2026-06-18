@@ -1,3 +1,5 @@
+package tests;
+
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.LogDetail;
 import io.restassured.specification.RequestSpecification;
@@ -73,7 +75,7 @@ Validar que el campo name sea igual a Tom
         .then()
                 .log().all()
                 .statusCode(200)
-                .body("name", equalTo("Cat"));
+                .body("name", equalTo("Whiskers"));
     }
 
 

@@ -1,3 +1,5 @@
+package tests;
+
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +27,7 @@ public class AuthTest {
 
  */
     /*
-    Escribe un nuevo test en AuthTest llamado requestConApiKey que haga un GET
+    Escribe un nuevo test en tests.AuthTest llamado requestConApiKey que haga un GET
     a /pet/findByStatus con el parámetro status=available y el header api_key
     con valor special-key contra https://petstore.swagger.io/v2.
      */
