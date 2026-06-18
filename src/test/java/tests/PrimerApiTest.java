@@ -1,101 +1,111 @@
+import base.BaseTest;
 import io.restassured.RestAssured;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
 
-public class PrimerApiTest {
+public class PrimerApiTest extends BaseTest {
 
+    /*
     @BeforeEach
     public void setUp() {
         RestAssured.baseURI = "https://jsonplaceholder.typicode.com";
     }
+     */
 
     @Test
     public void obtenerUsuarios() {
         RestAssured
                 .given()
+                    .spec(requestSpec)
                 .when()
-                .get("/users")
+                    .get("/users")
                 .then()
-                .statusCode(200);
+                    .statusCode(200);
     }
 
     @Test
     public void validarCuerpoRespuesta() {
         given()
+                .spec(requestSpec)
                 .when()
-                .get("/users")
+                    .get("/users")
                 .then()
-                .statusCode(200)
-                .body("size()", equalTo(10))
-                .body("[0].name", equalTo("Leanne Graham"));
+                    .statusCode(200)
+                    .body("size()", equalTo(10))
+                    .body("[0].name", equalTo("Leanne Graham"));
     }
 
     @Test
     public void validarHeaders() {
         given()
+                .spec(requestSpec)
                 .when()
-                .get("/users")
+                    .get("/users")
                 .then()
-                .statusCode(200)
-                .header("Content-Type", containsString("application/json"));
+                    .statusCode(200)
+                    .header("Content-Type", containsString("application/json"));
     }
 
     @Test
     public void usuarioNoExiste() {
         given()
+                .spec(requestSpec)
                 .when()
-                .get("/users/99999")
+                    .get("/users/99999")
                 .then()
-                .statusCode(404);
+                    .statusCode(404);
     }
 
     @Test
     public void crearPost() {
         given()
+                .spec(requestSpec)
                 .contentType("application/json")
                 .body("{ \"userId\": 1, \"title\": \"Mi titulo\", \"body\": \"Mi contenido\" }")
                 .when()
-                .post("/posts")
+                    .post("/posts")
                 .then()
-                .statusCode(201)
-                .body("title", equalTo("Mi titulo"))
-                .body("userId", equalTo(1));
+                    .statusCode(201)
+                    .body("title", equalTo("Mi titulo"))
+                    .body("userId", equalTo(1));
     }
 
     @Test
     public void actualizarPostCompleto() {
         given()
+                .spec(requestSpec)
                 .contentType("application/json")
                 .body("{ \"id\": 1, \"userId\": 1, \"title\": \"Titulo actualizado\", \"body\": \"Contenido actualizado\" }")
                 .when()
-                .put("/posts/1")
+                    .put("/posts/1")
                 .then()
-                .statusCode(200)
-                .body("title", equalTo("Titulo actualizado"));
+                    .statusCode(200)
+                    .body("title", equalTo("Titulo actualizado"));
     }
 
     @Test
     public void actualizarPostParcial() {
         given()
+                .spec(requestSpec)
                 .contentType("application/json")
                 .body("{ \"title\": \"Solo actualizo el titulo\" }")
                 .when()
-                .patch("/posts/1")
+                    .patch("/posts/1")
                 .then()
-                .statusCode(200)
-                .body("title", equalTo("Solo actualizo el titulo"));
+                    .statusCode(200)
+                    .body("title", equalTo("Solo actualizo el titulo"));
     }
 
     @Test
     public void eliminarPost() {
         given()
+                .spec(requestSpec)
                 .when()
-                .delete("/posts/1")
+                    .delete("/posts/1")
                 .then()
-                .statusCode(200);
+                    .statusCode(200);
     }
 
 }
