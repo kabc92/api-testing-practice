@@ -8,7 +8,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class FrankfurterTest extends BaseFinancialTest {
-//API: https://frankfurter.dev
+//API: https://frankfurter.dev / https://frankfurter.dev/v1/
 
     @Test
     public void getLatestExchangeRates(){
@@ -16,7 +16,7 @@ public class FrankfurterTest extends BaseFinancialTest {
         given()
                 .spec(requestSpec) //use this setup I already prepared it using setUp()
         .when()
-                .get("/latest")
+                .get("/v1/latest")
         .then()
                 .log().all()
                 .body("base",equalTo("EUR"))
@@ -33,7 +33,7 @@ public class FrankfurterTest extends BaseFinancialTest {
                 .queryParam("from", "USD")
                 .queryParam("to", "MXN")//"/latest?from=USD&to=MXN")
         .when()
-                .get("/latest")
+                .get("/v1/latest")
         .then()
                 .body("base", equalTo("USD"))
                 .body("rates.MXN", greaterThan(0.0f))
@@ -46,7 +46,7 @@ public class FrankfurterTest extends BaseFinancialTest {
         given()
                 .spec(requestSpec)
         .when()
-                .get("/2024-01-15")
+                .get("/v1/2024-01-15")
         .then()
                 .log().all()
                 .body("date", equalTo("2024-01-15"))
@@ -60,7 +60,7 @@ public class FrankfurterTest extends BaseFinancialTest {
                 given()
                         .spec(requestSpec) //retrieve setUp() information for this method
                 .when()
-                        .get("/2020-01-15")// get whatever you have from this historical date
+                        .get("/v1/2020-01-15")// get whatever you have from this historical date
                 .then()
                         .log().all() //for log purposes
                         .statusCode(200) //validate that it gives status code of 200
@@ -79,7 +79,7 @@ public class FrankfurterTest extends BaseFinancialTest {
                         .queryParam("from", "USD")
                         .queryParam("to", "MXN")
                 .when()
-                    .get("/latest")
+                    .get("/v1/latest")
                 .then()
                         .log().all()
                         .statusCode(200)

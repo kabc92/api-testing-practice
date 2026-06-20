@@ -10,7 +10,7 @@ public class BaseFinancialTest extends BaseTest{
     public void setUp(){
 
         requestSpec = new RequestSpecBuilder()
-                .setBaseUri("https://api.frankfurter.app")
+                .setBaseUri("https://api.frankfurter.dev")
                 .build();
 
     }
