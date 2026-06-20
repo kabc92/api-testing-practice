@@ -50,7 +50,7 @@ public class RequestSpecTest {
                 .when()
                    .get("/v2/pet/findByStatus")
                 .then()
-                    //.log().all()
+                    .log().all()
                    .statusCode(200);
 
     }
@@ -69,13 +69,13 @@ Validar que el campo name sea igual a Tom
     public void getPetById(){
         given()
                 .spec(requestSpec)
-                .pathParam("petId", 102)
+                .pathParam("petId", 365782)
         .when()
                 .get("/v2/pet/{petId}")// Las llaves indican que ahi va el pathParam!
         .then()
-                .log().all()
+                //.log().all()
                 .statusCode(200)
-                .body("name", equalTo("Whiskers"));
+                .body("name", equalTo("doggie"));
     }
 
 
