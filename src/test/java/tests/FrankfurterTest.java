@@ -3,9 +3,12 @@ package tests;
 import base.BaseFinancialTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Map;
 
 public class FrankfurterTest extends BaseFinancialTest {
 //API: https://frankfurter.dev / https://frankfurter.dev/v1/
@@ -90,8 +93,42 @@ public class FrankfurterTest extends BaseFinancialTest {
 
         //Validate that $5,000USD is always more than $50,000 MXN
         assertTrue(totalMXN > 50000);
-
     }
 
+    @Test
+    public void validateFiveYearMXNRange() {
 
+        //The following rates variable will extract AND store the values from 2020-01-01 to 2025-12-31 using a LIST
+        // "2020-01-02"  :  { "MXN" → 18.9 }
+        Map<String, Map<String, Float>> ratesMap = given()
+                .spec(requestSpec)
+                .queryParam("from", "USD")
+                .queryParam("to", "MXN")
+                .when()
+                .get("/v1/2020-01-01..2025-12-31")
+                .then()
+                .log().all()
+                .statusCode(200)
+                .extract()
+                .path("rates"); // extract the whole "rates" object
+
+        float min = Float.MAX_VALUE; // Start with the largest possible float value so any real rate will be smaller
+        float max = Float.MIN_VALUE; // Start with the smallest possible float value so any real rate will be larger
+
+        //ratesMap contains this: "2020-01-02"  :  { "MXN" → 18.9 }"
+        //using ratesMap.values() we ignored the date and get only the "MXN:18.9" part
+        for (Map<String, Float> dailyRate : ratesMap.values()) { // dataType var : collection
+
+            Float rate = dailyRate.get("MXN"); //dailyRAte {"MXN": 18.9}
+
+            if (rate < min)
+                min = rate;
+            if (rate > max)
+                max = rate;
+        }
+        assertTrue(min > 15.0f && max < 26.0f);
+
+        System.out.println("actualMin: " + min);
+        System.out.println("actualMax: " + max);
+    }
 }
