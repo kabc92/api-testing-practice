@@ -3,6 +3,8 @@ package tests;
 import base.BaseFinancialTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static io.restassured.RestAssured.*;
@@ -96,10 +98,10 @@ public class FrankfurterTest extends BaseFinancialTest {
     }
 
     @Test
-    public void validateFiveYearMXNRange() {
+    public void validateFiveYearMXNRangeOLD() {
 
-        //The following rates variable will extract AND store the values from 2020-01-01 to 2025-12-31 using a LIST
-        // "2020-01-02"  :  { "MXN" → 18.9 }
+        //The following ratesMap variable will extract AND store the values from 2020-01-01 to 2025-12-31 using a Map
+        // "2020-01-02"  :  { "MXN" → 18.9 }  --> Current Json format
         Map<String, Map<String, Float>> ratesMap = given()
                 .spec(requestSpec)
                 .queryParam("from", "USD")
@@ -131,4 +133,104 @@ public class FrankfurterTest extends BaseFinancialTest {
         System.out.println("actualMin: " + min);
         System.out.println("actualMax: " + max);
     }
+
+    private Map<String, Map<String, Float>> getHistoricalRates5Yrs(){ // "2020-01-02"  :  { "MXN" → 18.9 }  --> Current Json format
+
+        //The following ratesMap variable will extract AND store the values from 2020-01-01 to 2025-12-31 using a Map
+        // "2020-01-02"  :  { "MXN" → 18.9 }  --> Current Json format
+        return given()
+                    .spec(requestSpec)
+                    .queryParam("from", "USD")
+                    .queryParam("to", "MXN")
+                .when()
+                    .get("/v1/2020-01-01..2025-12-31")
+                .then()
+                    //.log().all()
+                    .statusCode(200)
+                .extract()
+                    .path("rates"); //Extract the whole "rates" object from the JSON
+    }
+    @Test
+    public void validateFiveYearMXNRange() {
+
+        Map<String, Map<String, Float>> ratesMap = getHistoricalRates5Yrs();
+
+        float min = Float.MAX_VALUE; // Start with the largest possible float value so any real rate will be smaller
+        float max = Float.MIN_VALUE; // Start with the smallest possible float value so any real rate will be larger
+
+        //ratesMap contains this: "2020-01-02"  :  { "MXN" → 18.9 }"
+        //using ratesMap.values() we ignored the date and get only the "MXN:18.9" part
+        for (Map<String, Float> dailyRate : ratesMap.values()) { // dataType var : collection
+
+            Float rate = dailyRate.get("MXN"); //Gets the VALUE associated with the "MXN" KEY from the map (e.g., 18.9) not the entire key-value pair (MXN: 18.9)
+
+            if (rate < min)
+                min = rate;
+            if (rate > max)
+                max = rate;
+        }
+        assertTrue(min > 15.0f && max < 26.0f);
+
+        System.out.println("actualMin: " + min);
+        System.out.println("actualMax: " + max);
+        System.out.println("");
+        System.out.println("Total entries: " + ratesMap.size());
+        System.out.println("First entry value: " + ratesMap.values().iterator().next());
+        System.out.println("All values: " + ratesMap.values());
+    }
+
+    @Test
+    public void validateSortedMXNRates(){
+
+        //GET HISTORICAL RATES
+        // "2020-01-02"  :  { "MXN" → 18.9 }  --> Current Json format
+        Map<String, Map<String, Float>> ratesMap = getHistoricalRates5Yrs();
+
+        //Step 2 - Create ArrayList and populate it with MXN values
+        ArrayList<Float> ratesList = new ArrayList<>();
+
+        for(Map<String, Float> dailyRate : ratesMap.values()){
+
+            Float rate = dailyRate.get("MXN");
+            ratesList.add(rate);
+        }
+        System.out.println("Before sorting: " + ratesList);
+
+        //ratesList
+        for(int i = 0;  i < ratesList.size() - 1; i++){
+            for(int j = 0; j < ratesList.size() - 1 - i; j++){
+                if(ratesList.get(j) > ratesList.get(j + 1)){ // example: j:25.1 > j+1:19.5? (25.1, 19.5)
+                    Float temp = ratesList.get(j); //store the value from j (25.1) in a temp variable
+                    ratesList.set(j,ratesList.get(j+1));// set the value from j+1 in j --> (19.5, 19.5)
+                    ratesList.set(j+1, temp);//set the value of j+1 with the temp variable: 19.5, 25.1
+                }
+            }
+        }
+        System.out.println("\nAfter sorting: " + ratesList);
+        assertTrue(ratesList.get(0) < ratesList.get(ratesList.size()-1));
+
+    }
+
+
+     private void bubbleSortDemo(){
+        float [] numbers = {25.1f, 19.5f, 18.8f, 16.3f}; //4
+
+        System.out.print("Before Sorting: " + Arrays.toString(numbers));
+
+        //BUBBLE SORT
+        for(int i = 0; i < numbers.length - 1; i++){
+            for (int j = 0; j < numbers.length - 1 - i; j++){ // 1 < 4 -1 -1 : 1 < 2
+
+                if(numbers[j] > numbers[j + 1]){ //19.5 > 25.3? NO
+                    float temp = numbers[j]; //save the value from the left: 25.1
+                    numbers[j] = numbers[j + 1];  //swap the right one to the left: 18.8
+                    numbers [j + 1] = temp; //set the temp as the value on the right side: 25.1
+                }
+            }
+        }
+        //print after sorting
+        System.out.println("\nAfter Sorting: " + Arrays.toString(numbers));
+    }
+
+
 }
