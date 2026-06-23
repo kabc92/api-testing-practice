@@ -3,14 +3,12 @@ package tests;
 import base.BaseFinancialTest;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.lang.reflect.Array;
+import java.util.*;
 
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.util.Map;
 
 public class FrankfurterTest extends BaseFinancialTest {
 //API: https://frankfurter.dev / https://frankfurter.dev/v1/
@@ -179,6 +177,26 @@ public class FrankfurterTest extends BaseFinancialTest {
         System.out.println("All values: " + ratesMap.values());
     }
 
+    private void bubbleSortDemo(){
+        float [] numbers = {25.1f, 19.5f, 18.8f, 16.3f}; //4
+
+        System.out.print("Before Sorting: " + Arrays.toString(numbers));
+
+        //BUBBLE SORT
+        for(int i = 0; i < numbers.length - 1; i++){
+            for (int j = 0; j < numbers.length - 1 - i; j++){ // 1 < 4 -1 -1 : 1 < 2
+
+                if(numbers[j] > numbers[j + 1]){ //19.5 > 25.3? NO
+                    float temp = numbers[j]; //save the value from the left: 25.1
+                    numbers[j] = numbers[j + 1];  //swap the right one to the left: 18.8
+                    numbers [j + 1] = temp; //set the temp as the value on the right side: 25.1
+                }
+            }
+        }
+        //print after sorting
+        System.out.println("\nAfter Sorting: " + Arrays.toString(numbers));
+    }
+
     @Test
     public void validateSortedMXNRates(){
 
@@ -211,26 +229,40 @@ public class FrankfurterTest extends BaseFinancialTest {
 
     }
 
+    private ArrayList<Float> getMXNRatesList(){
 
-     private void bubbleSortDemo(){
-        float [] numbers = {25.1f, 19.5f, 18.8f, 16.3f}; //4
+        // Helper method - extracts all MXN exchange rate values from the 5-year historical data
+        // "2020-01-02"  :  { "MXN" → 18.9 }  --> Current Json format from the API
+        Map<String, Map<String, Float>> ratesMap = getHistoricalRates5Yrs();
 
-        System.out.print("Before Sorting: " + Arrays.toString(numbers));
+        //Create the ArrayList where you want to store all the values coming from the Map
+        ArrayList<Float> ratesList = new ArrayList<>();
 
-        //BUBBLE SORT
-        for(int i = 0; i < numbers.length - 1; i++){
-            for (int j = 0; j < numbers.length - 1 - i; j++){ // 1 < 4 -1 -1 : 1 < 2
-
-                if(numbers[j] > numbers[j + 1]){ //19.5 > 25.3? NO
-                    float temp = numbers[j]; //save the value from the left: 25.1
-                    numbers[j] = numbers[j + 1];  //swap the right one to the left: 18.8
-                    numbers [j + 1] = temp; //set the temp as the value on the right side: 25.1
-                }
-            }
+        //Retrieve and add all the values to the list
+        for(Map<String, Float> dailyRate : ratesMap.values()){ // { "MXN" → 18.9 }  --> Current retrieved Json format from the API
+            ratesList.add(dailyRate.get("MXN")); //populate the list with the values from the object "MXN"
         }
-        //print after sorting
-        System.out.println("\nAfter Sorting: " + Arrays.toString(numbers));
+        // Returns an ArrayList of Float values representing daily USD to MXN rates from 2020 to 2025
+        return ratesList;
     }
+    @Test
+    public void validateNoDuplicateDates(){
 
+        Map<String, Map<String, Float>> ratesMap = getHistoricalRates5Yrs();
+
+        Set<String> dates = ratesMap.keySet();
+        assertTrue(dates.size() == ratesMap.size());
+
+        System.out.println("Total dates in Map: " + ratesMap.size());
+        System.out.println("Unique dates in Set: " + dates.size());
+
+        ArrayList<Float> ratesList = getMXNRatesList();
+
+        Set<Float> uniqueRates = new HashSet<>(ratesList);
+        assertTrue(uniqueRates.size() < ratesList.size());
+
+        System.out.println("\nTotal rates in Map: " + ratesMap.size());
+        System.out.println("Unique rates in Set: " + uniqueRates.size());
+    }
 
 }
