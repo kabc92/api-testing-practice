@@ -250,7 +250,7 @@ public class FrankfurterTest extends BaseFinancialTest {
 
         Map<String, Map<String, Float>> ratesMap = getHistoricalRates5Yrs();
 
-        Set<String> dates = ratesMap.keySet();
+        Set<String> dates = ratesMap.keySet(); //ratesMap.keySet() returns a Set<String> con todas esas fechas:
         assertTrue(dates.size() == ratesMap.size());
 
         System.out.println("Total dates in Map: " + ratesMap.size());
@@ -265,4 +265,69 @@ public class FrankfurterTest extends BaseFinancialTest {
         System.out.println("Unique rates in Set: " + uniqueRates.size());
     }
 
+    @Test
+    public void endToEndCarPriceQuote() {
+
+// STEP 1 - GET current USD to MXN exchange rate from Frankfurter API
+// Extract only the MXN rate value from the response JSON: { "rates": { "MXN": 19.5 } }
+        float exchangeRate = given()
+                    .spec(requestSpec) // base URI: https://api.frankfurter.dev
+                     .queryParam("from", "USD") // convert FROM USD
+                    .queryParam("to", "MXN") // convert TO MXN
+                .when()
+                    .get("/v1/latest") // GET latest exchange rate
+                .then()
+                    .statusCode(200) // validate successful response
+                .extract()
+                    .path("rates.MXN"); // extract only the MXN value as float
+
+// STEP 2 - Calculate the price of a $25,000 USD car in Mexican Pesos
+        float carPriceUSD = 25000;
+        float carPriceMXN = carPriceUSD * exchangeRate; // example: 25000 * 19.5 = 487,500 MXN
+
+// STEP 3 - Get 5-year historical rates to validate current price is within a realistic range
+// "2020-01-02" : { "MXN" → 18.9 } --> JSON format returned by the API
+        Map<String, Map<String, Float>> ratesMap = getHistoricalRates5Yrs();
+
+        float minRate = Float.MAX_VALUE; // start with largest possible value so any real rate will be smaller
+        float maxRate = Float.MIN_VALUE; // start with smallest possible value so any real rate will be larger
+
+// Iterate the Map ignoring the date keys, only processing the currency value objects
+        for (Map<String, Float> dailyRate : ratesMap.values()) { // dailyRate = { "MXN": 18.9 }
+
+            Float rate = dailyRate.get("MXN"); // extract the float value associated to the key "MXN"
+
+            if (rate < minRate) minRate = rate; // update min if current rate is lower
+            if (rate > maxRate) maxRate = rate; // update max if current rate is higher
+        }
+
+// STEP 4 - Calculate min and max possible car prices based on historical exchange rates
+        float minPriceMXN = carPriceUSD * minRate; // cheapest the car could have been: 25000 * 16.3 = ~407,812
+        float maxPriceMXN = carPriceUSD * maxRate; // most expensive: 25000 * 25.1 = ~627,600
+
+// Validate current price falls within the historical range
+        assertTrue(carPriceMXN > minPriceMXN && carPriceMXN < maxPriceMXN);
+        System.out.println("Valid price range: " + minPriceMXN + " - " + maxPriceMXN);
+
+// STEP 5 - POST the car quote to JSONPlaceholder simulating saving the quote to a system
+// Build the request body dynamically using HashMap
+        Map<String, Object> quoteBody = new HashMap<>();
+        quoteBody.put("title", "Car Quote"); // quote title
+        quoteBody.put("body", "Car price in MXN: " + carPriceMXN);  // calculated price in MXN
+        quoteBody.put("userId", 1); // user creating the quote
+
+// POST the quote and validate the response
+        given()
+                .baseUri("https://jsonplaceholder.typicode.com") // different base URI than Frankfurter
+                .contentType("application/json") // tell the API we are sending JSON
+                .body(quoteBody) // attach the HashMap as the request body
+                .when()
+                .post("/posts")// POST to /posts endpoint
+                .then()
+                .statusCode(201) // 201 = Created successfully
+                .body("title", equalTo("Car Quote"));// validate the title in the response matches
+        //
+    }
 }
+
+

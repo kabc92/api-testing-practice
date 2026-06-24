@@ -40,7 +40,7 @@ public class PrimerApiTest extends BaseTest {
     }
 
     @Test
-    public void validarHeaders() {
+    public void validateHeaders() {
         given()
                 .spec(requestSpec)
                 .when()
@@ -51,7 +51,7 @@ public class PrimerApiTest extends BaseTest {
     }
 
     @Test
-    public void usuarioNoExiste() {
+    public void userDoesNotExist() {
         given()
                 .spec(requestSpec)
                 .when()
@@ -61,7 +61,7 @@ public class PrimerApiTest extends BaseTest {
     }
 
     @Test
-    public void crearPost() {
+    public void createPost() {
         given()
                 .spec(requestSpec)
                 .contentType("application/json")
@@ -75,7 +75,7 @@ public class PrimerApiTest extends BaseTest {
     }
 
     @Test
-    public void actualizarPostCompleto() {
+    public void updateTheWholePost() {
         given()
                 .spec(requestSpec)
                 .contentType("application/json")
@@ -101,7 +101,7 @@ public class PrimerApiTest extends BaseTest {
     }
 
     @Test
-    public void eliminarPost() {
+    public void deletePost() {
         given()
                 .spec(requestSpec)
                 .when()
