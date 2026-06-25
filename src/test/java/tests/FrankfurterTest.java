@@ -265,6 +265,40 @@ public class FrankfurterTest extends BaseFinancialTest {
         System.out.println("Unique rates in Set: " + uniqueRates.size());
     }
 
+    // HELPER METHOD - returns the minimum and maximum USD to MXN exchange rates from 5 years of historical data
+    // Returns a Map with two keys: "minRate" and "maxRate"
+    private Map<String, Float> getMinMaxHistoricalRates(){
+
+        // GET 5 years of historical rates from Frankfurter API
+        // Format returned: "2020-01-02" : { "MXN" → 18.9 }
+        Map<String, Map<String, Float>> ratesMap = getHistoricalRates5Yrs();
+
+        // Start with extreme values so any real rate will replace them on the first comparison
+        float min = Float.MAX_VALUE; // Start with the largest possible float value so any real rate will be smaller
+        float max = Float.MIN_VALUE; // Start with the smallest possible float value so any real rate will be larger
+
+        //ratesMap contains this: "2020-01-02"  :  { "MXN" → 18.9 }"
+        //using ratesMap.values() we ignored the date and get only the "MXN:18.9" part through JsonPath
+        for (Map<String, Float> dailyRate : ratesMap.values()) { // dataType var : collection
+
+            Float rate = dailyRate.get("MXN"); //Gets the VALUE associated with the "MXN" KEY from the map (e.g., 18.9) not the entire key-value pair (MXN: 18.9)
+
+            if (rate < min) //update min if current rate is higher than the current minimum
+                min = rate;
+            if (rate > max)// update max if current rate is higher than the current maximum
+                max = rate;
+        }
+        //Build the result Map with 2 entries: minRate y maxRate()
+        Map<String, Float> result = new HashMap<>();
+        result.put("min", min); // example: "minRate" -> 16.31
+        result.put("max", max); // example: "maxRate" -> 25.104
+
+        //System.out.println(result);
+        return result;
+    }
+
+
+
     @Test
     public void endToEndCarPriceQuote() {
 
@@ -287,19 +321,13 @@ public class FrankfurterTest extends BaseFinancialTest {
 
 // STEP 3 - Get 5-year historical rates to validate current price is within a realistic range
 // "2020-01-02" : { "MXN" → 18.9 } --> JSON format returned by the API
-        Map<String, Map<String, Float>> ratesMap = getHistoricalRates5Yrs();
+        Map<String, Float> minMax = getMinMaxHistoricalRates();
+        float minRate = minMax.get("min");
+        float maxRate = minMax.get("max");
 
-        float minRate = Float.MAX_VALUE; // start with largest possible value so any real rate will be smaller
-        float maxRate = Float.MIN_VALUE; // start with smallest possible value so any real rate will be larger
+        System.out.println("Min: " + minMax.get("min"));
+        System.out.println("Max: " + minMax.get("max"));
 
-// Iterate the Map ignoring the date keys, only processing the currency value objects
-        for (Map<String, Float> dailyRate : ratesMap.values()) { // dailyRate = { "MXN": 18.9 }
-
-            Float rate = dailyRate.get("MXN"); // extract the float value associated to the key "MXN"
-
-            if (rate < minRate) minRate = rate; // update min if current rate is lower
-            if (rate > maxRate) maxRate = rate; // update max if current rate is higher
-        }
 
 // STEP 4 - Calculate min and max possible car prices based on historical exchange rates
         float minPriceMXN = carPriceUSD * minRate; // cheapest the car could have been: 25000 * 16.3 = ~407,812
