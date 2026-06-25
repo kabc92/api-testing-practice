@@ -95,43 +95,6 @@ public class FrankfurterTest extends BaseFinancialTest {
         assertTrue(totalMXN > 50000);
     }
 
-    @Test
-    public void validateFiveYearMXNRangeOLD() {
-
-        //The following ratesMap variable will extract AND store the values from 2020-01-01 to 2025-12-31 using a Map
-        // "2020-01-02"  :  { "MXN" → 18.9 }  --> Current Json format
-        Map<String, Map<String, Float>> ratesMap = given()
-                .spec(requestSpec)
-                .queryParam("from", "USD")
-                .queryParam("to", "MXN")
-                .when()
-                .get("/v1/2020-01-01..2025-12-31")
-                .then()
-                .log().all()
-                .statusCode(200)
-                .extract()
-                .path("rates"); // extract the whole "rates" object
-
-        float min = Float.MAX_VALUE; // Start with the largest possible float value so any real rate will be smaller
-        float max = Float.MIN_VALUE; // Start with the smallest possible float value so any real rate will be larger
-
-        //ratesMap contains this: "2020-01-02"  :  { "MXN" → 18.9 }"
-        //using ratesMap.values() we ignored the date and get only the "MXN:18.9" part
-        for (Map<String, Float> dailyRate : ratesMap.values()) { // dataType var : collection
-
-            Float rate = dailyRate.get("MXN"); //dailyRAte {"MXN": 18.9}
-
-            if (rate < min)
-                min = rate;
-            if (rate > max)
-                max = rate;
-        }
-        assertTrue(min > 15.0f && max < 26.0f);
-
-        System.out.println("actualMin: " + min);
-        System.out.println("actualMax: " + max);
-    }
-
     private Map<String, Map<String, Float>> getHistoricalRates5Yrs(){ // "2020-01-02"  :  { "MXN" → 18.9 }  --> Current Json format
 
         //The following ratesMap variable will extract AND store the values from 2020-01-01 to 2025-12-31 using a Map
@@ -297,11 +260,29 @@ public class FrankfurterTest extends BaseFinancialTest {
         return result;
     }
 
+    private float calculateCarPriceInMXN(float carPriceUSD, float exchangeRate){
+
+        return carPriceUSD * exchangeRate;
+    }
+
+    private void validatePriceWithinHistoricalRange(float carPriceUSD, float carPriceMXN,float minRate, float maxRate){
+
+        // STEP 4 - Calculate min and max possible car prices based on historical exchange rates
+        float minPriceMXN = carPriceUSD * minRate; // cheapest the car could have been: 25000 * 16.3 = ~407,812
+        float maxPriceMXN = carPriceUSD * maxRate; // most expensive: 25000 * 25.1 = ~627,600
+
+// Validate current price falls within the historical range
+        assertTrue(carPriceMXN > minPriceMXN && carPriceMXN < maxPriceMXN);
+        System.out.println("Valid price range: " + minPriceMXN + " - " + maxPriceMXN);
+
+    }
+
 
 
     @Test
     public void endToEndCarPriceQuote() {
 
+     float carPriceUSD = 25000;
 // STEP 1 - GET current USD to MXN exchange rate from Frankfurter API
 // Extract only the MXN rate value from the response JSON: { "rates": { "MXN": 19.5 } }
         float exchangeRate = given()
@@ -316,8 +297,10 @@ public class FrankfurterTest extends BaseFinancialTest {
                     .path("rates.MXN"); // extract only the MXN value as float
 
 // STEP 2 - Calculate the price of a $25,000 USD car in Mexican Pesos
-        float carPriceUSD = 25000;
-        float carPriceMXN = carPriceUSD * exchangeRate; // example: 25000 * 19.5 = 487,500 MXN
+       // float carPriceUSD = 25000;
+      //  float carPriceMXN = carPriceUSD * exchangeRate;
+
+        float carPriceMXN = calculateCarPriceInMXN(carPriceUSD, exchangeRate); // example: 25000 * 19.5 = 487,500 MXN
 
 // STEP 3 - Get 5-year historical rates to validate current price is within a realistic range
 // "2020-01-02" : { "MXN" → 18.9 } --> JSON format returned by the API
@@ -330,12 +313,8 @@ public class FrankfurterTest extends BaseFinancialTest {
 
 
 // STEP 4 - Calculate min and max possible car prices based on historical exchange rates
-        float minPriceMXN = carPriceUSD * minRate; // cheapest the car could have been: 25000 * 16.3 = ~407,812
-        float maxPriceMXN = carPriceUSD * maxRate; // most expensive: 25000 * 25.1 = ~627,600
 
-// Validate current price falls within the historical range
-        assertTrue(carPriceMXN > minPriceMXN && carPriceMXN < maxPriceMXN);
-        System.out.println("Valid price range: " + minPriceMXN + " - " + maxPriceMXN);
+        validatePriceWithinHistoricalRange(carPriceUSD, carPriceMXN, minMax.get("min"), minMax.get("max"));
 
 // STEP 5 - POST the car quote to JSONPlaceholder simulating saving the quote to a system
 // Build the request body dynamically using HashMap
