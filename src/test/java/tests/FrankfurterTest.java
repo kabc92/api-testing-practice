@@ -277,17 +277,10 @@ public class FrankfurterTest extends BaseFinancialTest {
 
     }
 
-
-
-    @Test
-    public void endToEndCarPriceQuote() {
-
-     float carPriceUSD = 25000;
-// STEP 1 - GET current USD to MXN exchange rate from Frankfurter API
-// Extract only the MXN rate value from the response JSON: { "rates": { "MXN": 19.5 } }
-        float exchangeRate = given()
+    private float getLatestUSDtoMXNRate(){
+        return given()
                     .spec(requestSpec) // base URI: https://api.frankfurter.dev
-                     .queryParam("from", "USD") // convert FROM USD
+                    .queryParam("from", "USD") // convert FROM USD
                     .queryParam("to", "MXN") // convert TO MXN
                 .when()
                     .get("/v1/latest") // GET latest exchange rate
@@ -295,45 +288,56 @@ public class FrankfurterTest extends BaseFinancialTest {
                     .statusCode(200) // validate successful response
                 .extract()
                     .path("rates.MXN"); // extract only the MXN value as float
+    }
 
-// STEP 2 - Calculate the price of a $25,000 USD car in Mexican Pesos
-       // float carPriceUSD = 25000;
-      //  float carPriceMXN = carPriceUSD * exchangeRate;
+    // Helper method - builds the car quote body and sends it to JSONPlaceholder
+    // Receives the calculated car price in MXN to include it in the request body
+    // NOTE: JSONPlaceholder is a fake REST API used for testing purposes ONLY
+    // Data is NOT persisted - POSTED records cannot be retrieved with a GET request
+    private void postCarQuote(float carPriceMXN) {
 
+        // Build the request body using a HashMap - each put() adds a key-value pair
+        Map<String, Object> quoteBody = new HashMap<>();
+        quoteBody.put("title", "Car Quote");
+        quoteBody.put("body", "Car price in MXN: " + carPriceMXN);
+        quoteBody.put("userId", 1);
+
+        // Send the POST request to JSONPlaceholder simulating saving the quote
+        given()
+                .baseUri("https://jsonplaceholder.typicode.com")
+                .contentType("application/json")
+                .body(quoteBody) // attach the HashMap as the request body
+                .when()
+                .post("/posts")
+                .then()
+                .statusCode(201) // 201 = the quote was successfully created
+                .body("title", equalTo("Car Quote"));
+    }
+
+    @Test
+    public void endToEndCarPriceQuote() {
+
+        float carPriceUSD = 25000;
+
+        // STEP 1 - GET current USD to MXN exchange rate from Frankfurter API
+        float exchangeRate = getLatestUSDtoMXNRate();
+
+        // STEP 2 - Calculate the price of a $25,000 USD car in Mexican Pesos
         float carPriceMXN = calculateCarPriceInMXN(carPriceUSD, exchangeRate); // example: 25000 * 19.5 = 487,500 MXN
 
-// STEP 3 - Get 5-year historical rates to validate current price is within a realistic range
-// "2020-01-02" : { "MXN" → 18.9 } --> JSON format returned by the API
+        // STEP 3 - Get 5-year historical rates to validate current price is within a realistic range
+        // "2020-01-02" : { "MXN" → 18.9 } --> JSON format returned by the API
         Map<String, Float> minMax = getMinMaxHistoricalRates();
         float minRate = minMax.get("min");
         float maxRate = minMax.get("max");
+        //System.out.println("Min: " + minMax.get("min"));
+        //System.out.println("Max: " + minMax.get("max"));
 
-        System.out.println("Min: " + minMax.get("min"));
-        System.out.println("Max: " + minMax.get("max"));
-
-
-// STEP 4 - Calculate min and max possible car prices based on historical exchange rates
-
+        // STEP 4 - Calculate min and max possible car prices based on historical exchange rates
         validatePriceWithinHistoricalRange(carPriceUSD, carPriceMXN, minMax.get("min"), minMax.get("max"));
 
-// STEP 5 - POST the car quote to JSONPlaceholder simulating saving the quote to a system
-// Build the request body dynamically using HashMap
-        Map<String, Object> quoteBody = new HashMap<>();
-        quoteBody.put("title", "Car Quote"); // quote title
-        quoteBody.put("body", "Car price in MXN: " + carPriceMXN);  // calculated price in MXN
-        quoteBody.put("userId", 1); // user creating the quote
-
-// POST the quote and validate the response
-        given()
-                .baseUri("https://jsonplaceholder.typicode.com") // different base URI than Frankfurter
-                .contentType("application/json") // tell the API we are sending JSON
-                .body(quoteBody) // attach the HashMap as the request body
-                .when()
-                .post("/posts")// POST to /posts endpoint
-                .then()
-                .statusCode(201) // 201 = Created successfully
-                .body("title", equalTo("Car Quote"));// validate the title in the response matches
-        //
+        // STEP 5 - POST the car quote to JSONPlaceholder simulating saving the quote to a system
+        postCarQuote(carPriceMXN);
     }
 }
 
