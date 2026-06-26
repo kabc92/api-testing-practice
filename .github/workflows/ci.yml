@@ -1,0 +1,25 @@
+  # Name of the workflow - this is what you see in GitHub under the Actions tab
+  name: API Tests
+  # When to trigger this workflow
+  on:
+    push:
+      branches: [ main ] # run every time you push to main
+    pull_request:
+      branches: [ main ] # run every time someone creates a pull request to main
+  # The work that GitHub will execute
+  jobs:
+    test:
+      runs-on: ubuntu-latest   # GitHub will use a Linux machine to run the tests
+      steps:
+        # Step 1 - Download your code from GitHub into the Linux machine
+        - name: Checkout code
+          uses: actions/checkout@v3
+        # Step 2 - Install Java 21 on the Linux machine
+        - name: Set up Java 21
+          uses: actions/setup-java@v3
+          with:
+            java-version: '21'
+            distribution: 'temurin'  #free open source Java distribution
+        # Step 3 - Run all tests using Maven - same command you use in IntelliJ
+        - name: Run tests
+          run: mvn test

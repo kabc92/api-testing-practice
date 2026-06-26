@@ -316,7 +316,6 @@ public class FrankfurterTest extends BaseFinancialTest {
 
     @Test
     public void endToEndCarPriceQuote() {
-
         float carPriceUSD = 25000;
 
         // STEP 1 - GET current USD to MXN exchange rate from Frankfurter API
