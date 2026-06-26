@@ -9,22 +9,15 @@ import static org.hamcrest.Matchers.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class RequestSpecTest {
     // I N S T A N C E  V A R I A B L E
-    RequestSpecification requestSpec; // esta variable viene de de la interface RequestSpecification
+    RequestSpecification requestSpec;
 
     // API = https://petstore.swagger.io/#/pet/findPetsByStatus
 
-    /*
-    @BeforeEach
-    public void setUp(){
-        requestSpec = given() // asigno mi variable proveniente de una interface a un metodo de RestAssured para poder crear mi fase de config del request
-                        .baseUri("https://petstore.swagger.io") //es mi base de URL / a donde voy
-                        .header("api_key" , "special-key") // custom header porque ocupas mandar un tipo de authentication
-                        .queryParam("status", "available")
-                        .log().all(); // loguea en consola toda la información del request: URL, headers, params, body. Es para debugging
-    }
-     */
     @BeforeEach
     public void setUp(){
         requestSpec = new RequestSpecBuilder()
@@ -35,47 +28,55 @@ public class RequestSpecTest {
                 .build();
     }
 
-
-    /*
-    El test debe:Anotarlo como test
-    Usar el requestSpec que ya construiste en el given()
-    Hacer un GET al endpoint de pets por status
-    Validar que regrese 200
-     */
-
     @Test
-    public void obtenerPetsDisponibles(){
+    public void getAvailablePets(){
                  given()
                    .spec(requestSpec)
                 .when()
                    .get("/v2/pet/findByStatus")
                 .then()
-                    .log().all()
+                    //.log().all()
                    .statusCode(200);
 
     }
 
-    /*
-    Bien, el id 102 y el nombre Tom.
-Ahora escribe el test. Se llama obtenerPetPorId y debe:
+    private long createPet(String name, String status) {
 
-Usar el requestSpec
-Usar .pathParam("petId", 102) en el given()
-Hacer GET a /v2/pet/{petId} — las llaves indican que ahí va el path param
-Validar status 200
-Validar que el campo name sea igual a Tom
-     */
-    @Test
-    public void getPetById(){
+        Map<String, Object> petBody = new HashMap<>();
+        petBody.put("name", name);
+        petBody.put("status", status);
+
+
+        // STEP 2 - POST to create a pet and get the generated ID
+        return given()
+                    .spec(requestSpec)
+                    .contentType("application/json")
+                    .body(petBody)
+                .when()
+                    .post("/v2/pet")
+                .then()
+                    .statusCode(200)
+                .extract()
+                    .path("id");
+    }
+
+    private void getPetAndValidate(long petId, String expectedName) {
         given()
                 .spec(requestSpec)
-                .pathParam("petId", 365782)
+                .pathParam("petId", petId)
         .when()
-                .get("/v2/pet/{petId}")// Las llaves indican que ahi va el pathParam!
+                .get("/v2/pet/{petId}")
         .then()
                 //.log().all()
                 .statusCode(200)
-                .body("name", equalTo("doggie"));
+                .body("name", equalTo(expectedName));
+    }
+
+    @Test
+    public void getPetById(){
+
+        long petId = createPet("Milo", "available");
+        getPetAndValidate(petId, "Milo");
     }
 
 
